@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<script>
+
+var example_expression = "(A | B)";
+// nand, and, xor, or
+function nand(a, b){
+	return a !& b;
+}
+function and(a, b){
+	return a && b;
+}
+function xor(a, b){
+	return a | b;
+}
+function or(a, b){
+	return a || b;
+}
+function not(a){
+	return !a;
+}
+// best stored as tree
+// [syntax, reference, input, output]
+// position of operator?
+var operators = [
+	[['!&', 	nand, 	[bool, null, bool], [bool]], 
+	[['&&', 	and,  	[bool, null, bool], [bool]], 
+	[['||', 	or, 	[bool, null, bool], [bool]], 
+	[['|', 		xor, 	[bool, null, bool], [bool]],
+	[['!', 		not,  	[null, bool],		[bool]]
+];
+
+// expression :: string
+// variables :: [expression, variables]
+function execute_expression(expression, variables){
+
+}
+// search variable names
+// search operators
+
+//evaluate_expression
+
+function next_operator(cursor_start, cursor_end, expression){
+	
+	
+}
+
+function print_segment(start, end, string){
+	console.log(string, start, end);
+}
+
+function get_expression_length(start, expression){
+	// possibly the whole thing
+	if(expression[start] = '('){ 
+		return expression.length() - start;
+	}
+	// nested expression
+	for(int i = 0; i < expression.length()-start; i++)(
+		if (expression[start+i] == ")"){
+			return i;
+		} 
+	}
+}
+
+// cursor 		:: int
+// variables 	:: [[name, value],...]
+// expression 	:: string
+// return		:: [value, type]
+function find_expression(cursor, variables, expression){
+    // [start, end, value]
+    var expression_length;
+	
+	var temp; //scope -> next a = temp
+    var is_end_of_expression = false;
+    var expected_parenthasis = false;
+		for(int i = cursor, i < expression.length() || is_end_of_expression){    
+    		if(expression[i] == '('){
+        	// is nested expression
+          if(expected_parentsis = true){
+          	find_next_operator = ()
+            
+          	evaluate_expression(i, variables, expression);
+          
+          }else{
+          
+          	expected_parenthsis = true;
+          
+          }
+          
+        }else if(expression[i] == ')'){
+        	if(expected_parenthsis = true){
+          	return temp;
+          }
+        }else if(expression[i] == 'A'){
+        
+        }
+    }
+    // iterate through the expression
+    	// if variable
+      	//expect operator
+      //if parenthasises
+      	//expect variable
+       
+}
+
+function truth_table(expression){
+		var answer = execute_expression(i, expression);
+}
+
+</script>
+
+</body>
+</html>
