@@ -10,6 +10,17 @@ class operator {
 
 }
 
+class variable {
+  
+  constructor(name, type, value){
+    this.name = name;
+    this.type = type;
+    this.value = value;
+  }
+  
+}
+
+
 function nand(a, b){
 	return !(a & b);
 }
@@ -43,69 +54,89 @@ var operator_not
 = new operator("!", not, [null, Boolean], [Boolean]);
 
 
-function next_operator(cursor_start, cursor_end, expression){
-	
-	
+function expression_execute(expression, variables){
+  
 }
 
-function print_segment(start, end, string){
-	console.log(string, start, end);
-}
-
-function get_expression_length(start, expression){
-	// possibly the whole thing
-	if(expression[start] = '('){ 
-		return expression.length() - start;
-	}
-	// nested expression
-	for(i = 0; i < expression.length()-start; i++){
-	  if(expression[start+i] == ')'){
-			return i;
-		} 
-	}
-}
-
-// cursor 		:: int
-// variables 	:: [[name, value],...]
-// expression 	:: string
-// return		:: [value, type]
-function find_expression(cursor, variables, expression){
-    // [start, end, value]
-    var expression_length;
-	
-	var temp; //scope -> next a = temp
-    var is_end_of_expression = false;
-    var expected_parenthasis = false;
-		for(i = cursor; i < expression.length() || is_end_of_expression; i++){    
-    		if(expression[i] == '('){
-        	// is nested expression
-          if(expected_parentsis = true){
-          	//find_next_operator = ()
-            
-          	evaluate_expression(i, variables, expression);
-          
-          }else{
-          
-          	expected_parenthsis = true;
-          
-          }
-          
-        }else if(expression[i] == ')'){
-        	if(expected_parenthsis = true){
-          	return temp;
-          }
-        }else if(expression[i] == 'A'){
-        
-        }
+function expression_get_length(expression, start){
+  console.log("start -> " + start);
+  if(expression[start] == '('){
+    
+    var counter = 0;
+    var i = start;
+    
+    do{
+      
+      console.log(i + " : " + expression[i]);
+      if(expression[i] == '('){
+        counter++;
+      }else if(expression[i] == ')'){
+        counter--;
+      }
+      i++
+    }while(!(counter == 0) && (i < expression.length));
+    
+    if(counter === 0){
+      return i-start;
+    }else{
+      console.log("error: no closing parenthesis at " + start);  
     }
-    // iterate through the expression
-    	// if variable
-      	//expect operator
-      //if parenthasises
-      	//expect variable
-       
+    
+  }else{
+    return expression.length - start;
+  }
+}
+function print_se(start, length){
+  console.log("[" + start + "," + (start+length) + "] -> " + length);
 }
 
-function truth_table(expression){
-		var answer = execute_expression(i, expression);
+
+function expression_evaluate(expression, start){
+  var length = expression_get_length(expression, start);
+  var i = start;
+  
+  console.log(expression.substring(start, start+length));
+  var expect_parenthesis = false;
+  print_se(start, length);
+  
+  
+  if(expression[start] == '('){
+    expect_parenthesis = true;
+    i++;
+  }
+  
+  for(; i < length-start; i++){
+    if(expression[i] == '('){
+      expression_evaluate(expression, i);      
+    }
+  }
+  
+  
+  
 }
+function truth_table_make_variables(variable_names){
+  var variables = [];
+  for(i = 0; i < variable_names.length; i++){
+    variables.push(new variable(variable_names[i], Boolean, false));
+  }
+  return variables;
+}
+function truth_table_next_row(variables){
+  
+}
+function truth_table_get_variables(expression){
+  return expression.match(/[A-Za-z]+/g);
+}
+function truth_table(expression){
+    var variable_names = truth_table_get_variables(expression);
+    console.log(variable_names);
+    var variables = truth_table_make_variables(variable_names);
+		console.log(variables);
+		
+		var error = expression_evaluate(expression, 0);
+}
+
+
+
+truth_table("((A && B) || (B || C))");
+
