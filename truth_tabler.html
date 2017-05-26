@@ -1,19 +1,23 @@
-<!DOCTYPE html>
-<html>
-<body>
+class operator {
 
-<script>
+	constructor(syntax, func, input, output){
+		this.syntax = syntax;
+		this.func 	= func;
+		this.input 	= input;
+		this.outout 	= output;
+		
+	}
 
-var example_expression = "(A | B)";
-// nand, and, xor, or
+}
+
 function nand(a, b){
-	return a !& b;
+	return !(a & b);
 }
 function and(a, b){
 	return a && b;
 }
 function xor(a, b){
-	return a | b;
+  return ( a || b ) && !( a && b );
 }
 function or(a, b){
 	return a || b;
@@ -21,26 +25,23 @@ function or(a, b){
 function not(a){
 	return !a;
 }
-// best stored as tree
-// [syntax, reference, input, output]
-// position of operator?
-var operators = [
-	[['!&', 	nand, 	[bool, null, bool], [bool]], 
-	[['&&', 	and,  	[bool, null, bool], [bool]], 
-	[['||', 	or, 	[bool, null, bool], [bool]], 
-	[['|', 		xor, 	[bool, null, bool], [bool]],
-	[['!', 		not,  	[null, bool],		[bool]]
-];
 
-// expression :: string
-// variables :: [expression, variables]
-function execute_expression(expression, variables){
 
-}
-// search variable names
-// search operators
+var operator_nand 
+= new operator("!&", nand, [Boolean, null, Boolean], [Boolean]);
 
-//evaluate_expression
+var operator_and 
+= new operator("&&", and, [Boolean, null, Boolean], [Boolean]);
+
+var operator_xor 
+= new operator("!&", xor, [Boolean, null, Boolean], [Boolean]);
+
+var operator_or 
+= new operator("|", or, [Boolean, null, Boolean], [Boolean]);
+
+var operator_not 
+= new operator("!", not, [null, Boolean], [Boolean]);
+
 
 function next_operator(cursor_start, cursor_end, expression){
 	
@@ -57,8 +58,8 @@ function get_expression_length(start, expression){
 		return expression.length() - start;
 	}
 	// nested expression
-	for(int i = 0; i < expression.length()-start; i++)(
-		if (expression[start+i] == ")"){
+	for(i = 0; i < expression.length()-start; i++){
+	  if(expression[start+i] == ')'){
 			return i;
 		} 
 	}
@@ -75,11 +76,11 @@ function find_expression(cursor, variables, expression){
 	var temp; //scope -> next a = temp
     var is_end_of_expression = false;
     var expected_parenthasis = false;
-		for(int i = cursor, i < expression.length() || is_end_of_expression){    
+		for(i = cursor; i < expression.length() || is_end_of_expression; i++){    
     		if(expression[i] == '('){
         	// is nested expression
           if(expected_parentsis = true){
-          	find_next_operator = ()
+          	//find_next_operator = ()
             
           	evaluate_expression(i, variables, expression);
           
@@ -108,8 +109,3 @@ function find_expression(cursor, variables, expression){
 function truth_table(expression){
 		var answer = execute_expression(i, expression);
 }
-
-</script>
-
-</body>
-</html>
