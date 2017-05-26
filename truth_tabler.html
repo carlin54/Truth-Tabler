@@ -59,7 +59,6 @@ function expression_execute(expression, variables){
 }
 
 function expression_get_length(expression, start){
-  console.log("start -> " + start);
   if(expression[start] == '('){
     
     var counter = 0;
@@ -67,7 +66,6 @@ function expression_get_length(expression, start){
     
     do{
       
-      console.log(i + " : " + expression[i]);
       if(expression[i] == '('){
         counter++;
       }else if(expression[i] == ')'){
@@ -97,8 +95,6 @@ function expression_evaluate(expression, start){
   
   console.log(expression.substring(start, start+length));
   var expect_parenthesis = false;
-  print_se(start, length);
-  
   
   if(expression[start] == '('){
     expect_parenthesis = true;
@@ -132,7 +128,6 @@ function truth_table(expression){
     console.log(variable_names);
     var variables = truth_table_make_variables(variable_names);
 		console.log(variables);
-		
 		var error = expression_evaluate(expression, 0);
 }
 
