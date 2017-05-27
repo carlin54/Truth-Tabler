@@ -4,7 +4,7 @@ class operator {
 		this.syntax = syntax;
 		this.func 	= func;
 		this.input 	= input;
-		this.outout 	= output;
+		this.output 	= output;
 		
 	}
 
@@ -12,10 +12,11 @@ class operator {
 
 class variable {
   
-  constructor(name, type, value){
+  constructor(name, type, value, priority){
     this.name = name;
     this.type = type;
     this.value = value;
+    this.priority = priority;
   }
   
 }
@@ -27,11 +28,11 @@ function xor  (a, b)  {return ( a || b ) && !( a && b );}
 function or   (a, b)  {return a || b;                   }
 function not  (a)     {return !a;                       }
 
-var operator_nand = new operator("!&", nand, [Boolean, null, Boolean], [Boolean]);
-var operator_and =  new operator("&&", and, [Boolean, null, Boolean], [Boolean]);
-var operator_xor =  new operator("||", xor, [Boolean, null, Boolean], [Boolean]);
-var operator_or =   new operator("|", or, [Boolean, null, Boolean], [Boolean]);
-var operator_not =  new operator("!", not, [null, Boolean], [Boolean]);
+var operator_nand = new operator(2, "!&", nand, [Boolean, null, Boolean], [Boolean]);
+var operator_and =  new operator(2, "&&", and, [Boolean, null, Boolean], [Boolean]);
+var operator_xor =  new operator(2, "||", xor, [Boolean, null, Boolean], [Boolean]);
+var operator_or =   new operator(2, "|", or, [Boolean, null, Boolean], [Boolean]);
+var operator_not =  new operator(1, "!", not, [null, Boolean], [Boolean]);
 
 var operators = [];
 operators.push(operator_nand);
@@ -81,7 +82,7 @@ function expression_is_operator(expression, i){
     for(k = 0; k < operators[j].syntax.length; k++){
       var sbstr = expression.substring(i, i+operators[j].syntax.length);
       if(sbstr == operators[j].syntax){
-        console.log("found operator: " + operators[j].syntax);
+        // console.log("found operator: " + operators[j].syntax);
         return true;
       }
     }  
@@ -102,12 +103,12 @@ function expression_get_operator(expression, i){
     for(k = 0; k < operators[j].syntax.length; k++){
       var sbstr = expression.substring(i, i+operators[j].syntax.length);
       if(sbstr == operators[j].syntax){
-        console.log("got operator: " + operators[j].syntax);
+        // console.log("got operator: " + operators[j].syntax);
         return operators[j];
       }
     }  
   }  
-  console.log("error: operator not found!")
+  // console.log("error: operator not found!")
 }
 function expression_get_variable(expression, i){
   var variable_name = new String;
@@ -118,15 +119,37 @@ function expression_get_variable(expression, i){
       break;
     }
   }
-  console.log("got name: " + variable_name);
+  // console.log("got name: " + variable_name);
   return variable_name;
 }
-function expression_evaluate(expression, start){
-  
+
+
+
+function variable_resolve(variable_name, variables){
+  for(i = 0; i < variables.length; i++){
+    if(variable_name == variables[i].name){
+      return variables[i];
+    }
+  }
+  console.log("error: unable to resolve " + variable_name);
+  return null;
+}
+
+function scope_check_operators(scope, operators){
+  // try to reduce the output to one type
+  for(i = 0; i < scope.length; i++){
+    if(scope[i].isArray()){
+      scope[i] = scope_check_operators(scope[i]);
+    }else if(typeof(scope[i]) == 'operator'){
+      console.log("operator found!");
+    }
+  }
+}
+function expression_evaluate(expression, variables, operators, start){
   var length = expression_get_length(expression, start);
   var i = start;
   var clipped_expression = expression.substring(start, start+length);
-  console.log("open (\"" + clipped_expression +"\") -> [" + start + ", " + (start+length) + ", " + length + "]");
+  // console.log("open (\"" + clipped_expression +"\") -> [" + start + ", " + (start+length) + ", " + length + "]");
   var expect_parenthesis = false;
   
   if(expression[start] == '('){
@@ -136,33 +159,43 @@ function expression_evaluate(expression, start){
   
   var scope = [];
   for(; i < start+length; i++){
-    console.log("parsing (" + i + "): " + expression[i]);
+     //console.log("parsing (" + i + "): " + expression[i]);
     
     if(expression_is_nested_expression(expression, i)){
-      scope.push(expression_evaluate(expression, i)); //scope.push();
+      scope.push(expression_evaluate(expression, variables, operators, i)); //scope.push();
       i += expression_get_length(expression, i);
-      console.log("jumping to " + i);
+      //console.log("jumping to " + i);
+      
     }else if(expression_is_operator(expression, i)){
       var operator = expression_get_operator(expression, i);
-      scope.push(operator.syntax);
+      scope.push(operator);
       i += operator.syntax.length;
-      console.log("jumping to " + i);
+      //console.log("jumping to " + i);
+      
     }else if(expression_is_variable(expression, i)){
-      var variable = expression_get_variable(expression, i);
+      var variable_name = expression_get_variable(expression, i);
+      var variable = variable_resolve(variable_name, variables);
       scope.push(variable);
-      i += variable.length;
+      i += variable_name.length;
+      //console.log("jumping to " + i);
       
-      console.log("jumping to " + i);
     }else if(expression_is_space(expression, i)){
-      
+      continue;
+    }else{
+      console.log("no fucking clue what " + expression[i] + " is.");
     }
   }
   
-  // evaluate scope 
+  scope_evaluate(scope, operators);
   
-  console.log("close (\"" + clipped_expression +"\")");
+  // console.log("close (\"" + clipped_expression +"\")");
+  
+  scope_check_operators(scope, operators);
+  
   return scope;
 }
+
+
 function truth_table_make_variables(variable_names){
   var variables = [];
   for(i = 0; i < variable_names.length; i++){
@@ -178,10 +211,11 @@ function truth_table_get_variables(expression){
 }
 function truth_table(expression){
     var variable_names = truth_table_get_variables(expression);
-    console.log(variable_names);
+    console.log("variable names: " + variable_names);
     var variables = truth_table_make_variables(variable_names);
+		console.log("variables: ");
 		console.log(variables);
-		var error = expression_evaluate(expression, 0);
+		var error = expression_evaluate(expression, variables, operators, 0);
 		console.log(error);
 }
 
