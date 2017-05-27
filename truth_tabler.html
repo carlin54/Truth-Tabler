@@ -21,37 +21,24 @@ class variable {
 }
 
 
-function nand(a, b){
-	return !(a & b);
-}
-function and(a, b){
-	return a && b;
-}
-function xor(a, b){
-  return ( a || b ) && !( a && b );
-}
-function or(a, b){
-	return a || b;
-}
-function not(a){
-	return !a;
-}
+function nand (a, b)  {return !(a & b);                 }
+function and  (a, b)  {return a && b;                   }
+function xor  (a, b)  {return ( a || b ) && !( a && b );}
+function or   (a, b)  {return a || b;                   }
+function not  (a)     {return !a;                       }
 
+var operator_nand = new operator("!&", nand, [Boolean, null, Boolean], [Boolean]);
+var operator_and =  new operator("&&", and, [Boolean, null, Boolean], [Boolean]);
+var operator_xor =  new operator("||", xor, [Boolean, null, Boolean], [Boolean]);
+var operator_or =   new operator("|", or, [Boolean, null, Boolean], [Boolean]);
+var operator_not =  new operator("!", not, [null, Boolean], [Boolean]);
 
-var operator_nand 
-= new operator("!&", nand, [Boolean, null, Boolean], [Boolean]);
-
-var operator_and 
-= new operator("&&", and, [Boolean, null, Boolean], [Boolean]);
-
-var operator_xor 
-= new operator("!&", xor, [Boolean, null, Boolean], [Boolean]);
-
-var operator_or 
-= new operator("|", or, [Boolean, null, Boolean], [Boolean]);
-
-var operator_not 
-= new operator("!", not, [null, Boolean], [Boolean]);
+var operators = [];
+operators.push(operator_nand);
+operators.push(operator_and);
+operators.push(operator_xor);
+operators.push(operator_or);
+operators.push(operator_not);
 
 
 function expression_execute(expression, variables){
@@ -88,12 +75,58 @@ function print_se(start, length){
   console.log("[" + start + "," + (start+length) + "] -> " + length);
 }
 
-
+// assumes sported from max length min length
+function expression_is_operator(expression, i){
+  for(j = 0; j < operators.length; j++){
+    for(k = 0; k < operators[j].syntax.length; k++){
+      var sbstr = expression.substring(i, i+operators[j].syntax.length);
+      if(sbstr == operators[j].syntax){
+        console.log("found operator: " + operators[j].syntax);
+        return true;
+      }
+    }  
+  }
+  return false;
+}
+function expression_is_space(expression, i){
+  return expression[i] == ' ';
+}
+function expression_is_variable(expression, i){
+  return expression[i].match(/[A-Za-z]/g);
+}
+function expression_is_nested_expression(expression, i){
+  return expression[i] == '(';
+}
+function expression_get_operator(expression, i){
+  for(j = 0; j < operators.length; j++){
+    for(k = 0; k < operators[j].syntax.length; k++){
+      var sbstr = expression.substring(i, i+operators[j].syntax.length);
+      if(sbstr == operators[j].syntax){
+        console.log("got operator: " + operators[j].syntax);
+        return operators[j];
+      }
+    }  
+  }  
+  console.log("error: operator not found!")
+}
+function expression_get_variable(expression, i){
+  var variable_name = new String;
+  for(j = i; j < expression.length; j++){
+    if(expression[j].match(/[A-Za-z]/g)){
+      variable_name += expression[j];
+    }else{
+      break;
+    }
+  }
+  console.log("got name: " + variable_name);
+  return variable_name;
+}
 function expression_evaluate(expression, start){
+  
   var length = expression_get_length(expression, start);
   var i = start;
-  
-  console.log(expression.substring(start, start+length));
+  var clipped_expression = expression.substring(start, start+length);
+  console.log("open (\"" + clipped_expression +"\") -> [" + start + ", " + (start+length) + ", " + length + "]");
   var expect_parenthesis = false;
   
   if(expression[start] == '('){
@@ -101,14 +134,34 @@ function expression_evaluate(expression, start){
     i++;
   }
   
-  for(; i < length-start; i++){
-    if(expression[i] == '('){
-      expression_evaluate(expression, i);      
+  var scope = [];
+  for(; i < start+length; i++){
+    console.log("parsing (" + i + "): " + expression[i]);
+    
+    if(expression_is_nested_expression(expression, i)){
+      scope.push(expression_evaluate(expression, i)); //scope.push();
+      i += expression_get_length(expression, i);
+      console.log("jumping to " + i);
+    }else if(expression_is_operator(expression, i)){
+      var operator = expression_get_operator(expression, i);
+      scope.push(operator.syntax);
+      i += operator.syntax.length;
+      console.log("jumping to " + i);
+    }else if(expression_is_variable(expression, i)){
+      var variable = expression_get_variable(expression, i);
+      scope.push(variable);
+      i += variable.length;
+      
+      console.log("jumping to " + i);
+    }else if(expression_is_space(expression, i)){
+      
     }
   }
   
+  // evaluate scope 
   
-  
+  console.log("close (\"" + clipped_expression +"\")");
+  return scope;
 }
 function truth_table_make_variables(variable_names){
   var variables = [];
@@ -129,9 +182,10 @@ function truth_table(expression){
     var variables = truth_table_make_variables(variable_names);
 		console.log(variables);
 		var error = expression_evaluate(expression, 0);
+		console.log(error);
 }
 
 
 
-truth_table("((A && B) || (B || C))");
+truth_table("((A && B) || (D || C))");
 
