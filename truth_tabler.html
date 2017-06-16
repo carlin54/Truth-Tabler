@@ -138,21 +138,51 @@ function variable_resolve(variable_name, variables){
   return null;
 }
 
-function scope_check_operators(scope, operators){
-  // try to reduce the output to one type
+function isArray(element){
+  return element.constructor == Array;
+}
+
+function isOperator(element){
+  return element.constructor == operator;
+}
+
+function hasPriority(element, cur){
+  return element.priority == cur;
+}
+
+function scope_check_syntax(scope, operators){
+  console.log(scope);
   
+  // resolve all variables in the array
+  for(i = 0; i < scope.length; i++){ 
+    if(isArray(scope[i])){
+      scope_check_syntax(scope[i], operators);
+      console.log("array found!");
+    }
+  }
   for(i = 0; i < scope.length; i++){
-    console.log(scope[i].constructor); 
-    
-    if(scope[i].isArray){
-      console.log("nested expression found!");
-      scope[i] = scope_check_operators(scope[i]);
-    }else if(scope[i].constructor == 'operator'){
-      console.log("operator found!");
+    for(j = 0; j < scope.length; j++){
+      if(isOperator(scope[j]) && hasPriority(scope[j], i)){
+        // temporary scope
+        
+        var before = 0;
+        while(scope < scope.length){
+          
+        }
+        var after = 0;
+        while(scope < scope.length){
+          
+        }
+        
+        scope[j].output.
+        // 
+        
+        // remake the scope
+        console.log("operator found!");
+      }
     }
   }
 }
-
 
 function expression_evaluate(expression, variables, operators, start){
   var length = expression_get_length(expression, start);
@@ -201,8 +231,6 @@ function expression_evaluate(expression, variables, operators, start){
   
   // console.log("close (\"" + clipped_expression +"\")");
   
-  scope_check_operators(scope, operators);
-  
   
   return scope;
 }
@@ -225,13 +253,21 @@ function truth_table_get_variables(expression){
 }
 
 function truth_table(expression){
+    console.log("\n---Fetching Variable Names---");
     var variable_names = truth_table_get_variables(expression);
-    console.log("variable names: " + variable_names);
+    console.log("Names: " + variable_names);
+    
+    console.log("\n---Creating Variables---");
     var variables = truth_table_make_variables(variable_names);
-		console.log("variables: ");
+		console.log("Variables: ");
 		console.log(variables);
-		var error = expression_evaluate(expression, variables, operators, 0);
-		//console.log(error);
+		
+		console.log("\n---Rendering Expression---");
+		var scope = expression_evaluate(expression, variables, operators, 0);
+    
+    console.log("\n---Checking Syntax---");
+    scope_check_syntax(scope);
+    
 }
 
 
