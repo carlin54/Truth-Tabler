@@ -1,4 +1,4 @@
-class operator {
+class Operator {
 
 	constructor(priority, syntax, func, input, output){
 		this.priority   = priority;
@@ -17,11 +17,11 @@ function xor  (a, b)  {return ( a || b ) && !( a && b );}
 function or   (a, b)  {return a || b;                   }
 function not  (a)     {return !a;                       }
 
-var operator_nand = new operator(2, "!&", nand, [Boolean, null, Boolean], [Boolean]);
-var operator_and =  new operator(2, "&&", and, [Boolean, null, Boolean], [Boolean]);
-var operator_xor =  new operator(2, "||", xor, [Boolean, null, Boolean], [Boolean]);
-var operator_or =   new operator(2, "|", or, [Boolean, null, Boolean], [Boolean]);
-var operator_not =  new operator(1, "!", not, [null, Boolean], [Boolean]);
+var operator_nand = new Operator(2, "!&", nand, [Boolean, null, Boolean], [Boolean]);
+var operator_and =  new Operator(2, "&&", and, [Boolean, null, Boolean],  [Boolean]);
+var operator_xor =  new Operator(2, "||", xor, [Boolean, null, Boolean],  [Boolean]);
+var operator_or =   new Operator(2, "|", or, [Boolean, null, Boolean],    [Boolean]);
+var operator_not =  new Operator(1, "!", not, [null, Boolean],            [Boolean]);
 
 var operators = [];
 operators.push(operator_nand);
@@ -30,7 +30,7 @@ operators.push(operator_xor);
 operators.push(operator_or);
 operators.push(operator_not);
 
-class variable {
+class Variable {
   
   constructor(name, type, value){
     this.name = name;
@@ -138,50 +138,76 @@ function variable_resolve(variable_name, variables){
   return null;
 }
 
+function isVariable(element){
+  return element.constructor == Variable;
+}
+
 function isArray(element){
   return element.constructor == Array;
 }
 
 function isOperator(element){
-  return element.constructor == operator;
+  return element.constructor == Operator;
 }
 
 function hasPriority(element, cur){
   return element.priority == cur;
 }
 
+
 function scope_check_syntax(scope, operators){
-  console.log(scope);
+ 
+  var cs = scope;
   
   // resolve all variables in the array
   for(i = 0; i < scope.length; i++){ 
-    if(isArray(scope[i])){
-      scope_check_syntax(scope[i], operators);
+    if(isArray(cs[i])){
+      cs[i] = scope_check_syntax(cs[i], operators);
       console.log("array found!");
+    } else if (isVariable(check_scope[i])){
+      cs[i] = cs[i].type;
+      console.log(cs);
     }
   }
-  for(i = 0; i < scope.length; i++){
-    for(j = 0; j < scope.length; j++){
-      if(isOperator(scope[j]) && hasPriority(scope[j], i)){
-        // temporary scope
+  
+  var has_operator = true;
+  var priority = 0;
+  
+  while(has_operator){
+    has_operator = false;
+    
+    for(i = 0; i < cs.length; i++){
+      if(isOperator(cs[i]) && hasPriority(cs[i], priority)){
+        var op_pos;
+        for(j = 0; j < cs[i].input.length; j++){
+          if(cs[i].input[j] == null){
+            op_pos = j;
+          } 
+        } 
         
-        var before = 0;
-        while(scope < scope.length){
+        if(cs[i].length < cs[i].input.length){
+          console.log("error: input too shot, expected ("   + 
+          cs[i].input.length                                + 
+          ")"                                               + 
+          ", recieved ("                                    + 
+          cs[i].length                                      + 
+          ")");
+        }
+        
+        for(j = 0; j < cs[i].input.length; j++){
+          console.log(cs[j] + " with " + cs[i].input[j]);
           
         }
-        var after = 0;
-        while(scope < scope.length){
-          
-        }
         
-        scope[j].output.
-        // 
-        
-        // remake the scope
-        console.log("operator found!");
       }
+      
+      
     }
+    
+    priority++;
   }
+  
+    
 }
 
 function expression_evaluate(expression, variables, operators, start){
@@ -239,7 +265,7 @@ function expression_evaluate(expression, variables, operators, start){
 function truth_table_make_variables(variable_names){
   var variables = [];
   for(i = 0; i < variable_names.length; i++){
-    variables.push(new variable(variable_names[i], Boolean, false));
+    variables.push(new Variable(variable_names[i], Boolean, false));
   }
   return variables;
 }
