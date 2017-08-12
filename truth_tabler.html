@@ -363,28 +363,48 @@ function execute_expression(expression, variables, values){
 }
 
 function truth_table(expression){
+    
     console.log("\n---Fetching Variable Names---");
-    var variable_names = truth_table_get_variables(expression);
+    try{
+      var variable_names = truth_table_get_variables(expression);
+    }catch(error){
+      
+    }
     console.log("Names: " + variable_names);
     
+    
     console.log("\n---Creating Variables---");
-    var variables = truth_table_make_variables(variable_names);
-		console.log("Variables: ");
-		console.log(variables);
-		
+    try{
+      var variables = truth_table_make_variables(variable_names);
+    }catch(error){
+      
+    }
 		console.log("\n---Rendering Expression---");
-		var scope = expression_evaluate(expression, variables, operators, 0);
+		try{
+		  var scope = expression_evaluate(expression, variables, operators, 0);
+		}catch(error){
+		  
+		}
     
     console.log("\n---Checking Syntax---");
     
     try{
-      var final = scope_check_syntax(scope, operators, );
+      var final = scope_check_syntax(scope, operators);
     }catch(error){
       
     }
     
+    var counters;
+    for(i = 0; i < variables.length; i++){
+      counters.push(0);
+    }
+    
     if(final === Boolean){
-      
+      for(i = 0; i < 2^variables.length; i++){
+        for(j = 0; j < variables.length; j++){
+          counters[j]++;  
+        }
+      }
     }
     
     
