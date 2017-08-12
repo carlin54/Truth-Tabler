@@ -40,8 +40,11 @@ class Variable {
   
 }
 
-
-
+var uniqueArray = function(arrArg) {
+  return arrArg.filter(function(elem, pos,arr) {
+    return arr.indexOf(elem) == pos;
+  });
+};
 
 
 function expression_execute(expression, variables){
@@ -190,18 +193,18 @@ function scope_check_syntax(scope, operators, n=1){
   
   // all variables to types recursivly
   for(i = 0; i < scope.length; i++){ 
-    
     if(isArray(scope[i])){
-      // TODO: try catch
-      scope[i] = scope_check_syntax(scope[i], operators, n+1);
-       
+      try{
+        scope[i] = scope_check_syntax(scope[i], operators, n+1);
+      }catch(error){
+        throw error;
+      }
+      
     } else if (isVariable(scope[i])){
       scope[i] = scope[i].type;
       console.log(scope);
     }
   }
-  
-  //console.log("has_scope()");
   
   var has_operator = true;
   var priority = 0;
@@ -220,8 +223,6 @@ function scope_check_syntax(scope, operators, n=1){
       
       if(isOperator(scope[i]) && hasPriority(scope[i], priority)){
         
-        //console.log("found operator");
-        
         // (i) is the operators positon in the scope
         // (operator_position) is the positon in the operators syntax
         var operator_position; 
@@ -239,8 +240,6 @@ function scope_check_syntax(scope, operators, n=1){
             break;
           } 
         } 
-        //console.log("operator_length:" + operator_length);
-        //console.log("operator_position:" + operator_position);
         
         // we check that we have enough arguments for the opeator
         // Expected: [Bool][Null][Bool]
@@ -251,7 +250,6 @@ function scope_check_syntax(scope, operators, n=1){
                                 "requires "              + cs[i].operator_length,
                                 "has "                   + scope_length);
         }
-        //console.log("scope_length:" + scope_length);
         
         // we check that the operators have order of the syntax is good
         // Expected: [Bool][Null][Bool] -> i - operator_position = 1 - 1 =  0
@@ -260,15 +258,11 @@ function scope_check_syntax(scope, operators, n=1){
         if(start_position < 0){
           throw syntaxException("incorrect syntax for the operator", "", "");
         }
-        //console.log("start_position:" + start_position);
         
         // we check that the operators syntax matches the expression
         // Expected: [Bool][Null][Bool]
         // Actual:   [Int][Bool][Null]
-        // cs[i] is the operator that we're working on
         for(j = 0; j < operator_length; j++){
-          //console.log(j + " (start)");
-          
           if(scope[i].input[j] == null){
             // Expect: [==]
             if(!scope[i] === scope[j+start_position]){
@@ -316,7 +310,6 @@ function expression_evaluate(expression, variables, operators, start){
   var length = expression_get_length(expression, start);
   var i = start;
   var clipped_expression = expression.substring(start, start+length);
-  // console.log("open (\"" + clipped_expression +"\") -> [" + start + ", " + (start+length) + ", " + length + "]");
   var expect_parenthesis = false;
   
   if(expression[start] == '('){
@@ -326,38 +319,24 @@ function expression_evaluate(expression, variables, operators, start){
   
   var scope = [];
   for(; i < start+length; i++){
-     console.log("parsing (" + i + "): " + expression[i]);
-    
     if(expression_is_nested_expression(expression, i)){
-      console.log("nested expression found jumping to " + "(\"" + expression[i] + "\")");
       scope.push(expression_evaluate(expression, variables, operators, i)); //scope.push();
       i += expression_get_length(expression, i);
-      
-      
     }else if(expression_is_operator(expression, i)){
       var operator = expression_get_operator(expression, i);
       scope.push(operator);
       i += operator.syntax.length;
-      console.log("operator found: jumping to " + i + "(\"" + expression[i] + "\")");
-      
     }else if(expression_is_variable(expression, i)){
       var variable_name = expression_get_variable(expression, i);
       var variable = variable_resolve(variable_name, variables);
       scope.push(variable);
       i += variable_name.length;
-      console.log("variable found: jumping to " + i + "(\"" + expression[i] + "\")");
-      
     }else if(expression_is_space(expression, i)){
-      console.log("skipping " + i + " (\"" + expression[i] + "\")");
       continue;
     }else{
       console.log("no fucking clue what " + expression[i] + " is.");
     }
   }
-  
-  // scope_evaluate(scope, operators);
-  
-  // console.log("close (\"" + clipped_expression +"\")");
   
   
   return scope;
@@ -373,7 +352,10 @@ function truth_table_make_variables(variable_names){
 }
 
 function truth_table_get_variables(expression){
-  return expression.match(/[A-Za-z]+/g);
+  
+  var variables = expression.match(/[A-Za-z]+/g);
+  variables = uniqueArray(variables);
+  return variables;
 }
 
 function execute_expression(expression, variables, values){
@@ -396,7 +378,7 @@ function truth_table(expression){
     console.log("\n---Checking Syntax---");
     
     try{
-      var final = scope_check_syntax(scope, operators);
+      var final = scope_check_syntax(scope, operators, );
     }catch(error){
       
     }
@@ -408,7 +390,4 @@ function truth_table(expression){
     
 }
 
-
-
-
-truth_table("((A && B) || (D || C))");
+truth_table("(!(A && B) || (D | (A || B))) & (A !& C)");
