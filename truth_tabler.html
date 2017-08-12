@@ -17,11 +17,11 @@ function xor  (a, b)  {return ( a || b ) && !( a && b );}
 function or   (a, b)  {return a || b;                   }
 function not  (a)     {return !a;                       }
 
-var operator_nand = new Operator(2, "!&", nand, [Boolean, null, Boolean], [Boolean]);
-var operator_and =  new Operator(2, "&&", and, [Boolean, null, Boolean],  [Boolean]);
-var operator_xor =  new Operator(2, "||", xor, [Boolean, null, Boolean],  [Boolean]);
-var operator_or =   new Operator(2, "|", or, [Boolean, null, Boolean],    [Boolean]);
-var operator_not =  new Operator(1, "!", not, [null, Boolean],            [Boolean]);
+var operator_nand = new Operator(2, "!&", nand, [Boolean, null, Boolean], Boolean);
+var operator_and =  new Operator(2, "&&", and, [Boolean, null, Boolean],  Boolean);
+var operator_xor =  new Operator(2, "||", xor, [Boolean, null, Boolean],  Boolean);
+var operator_or =   new Operator(2, "|", or, [Boolean, null, Boolean],    Boolean);
+var operator_not =  new Operator(1, "!", not, [null, Boolean],            Boolean);
 
 var operators = [];
 operators.push(operator_nand);
@@ -173,43 +173,59 @@ function syntaxException(message, actual, expected){
   this.actual = actual;
 }
 
-function scope_check_syntax(scope, operators){
+function isVariableSameAsType(variable, type){
+    return variable instanceof type;
+}
+
+function scope_check_syntax(scope, operators, n=1){
  
-  var cs = scope;
-  console.log("scope_check_syntax()");
+  console.log("scope_check_syntax(n = " + n + ")");
   
-  // resolve all variables in the array
+  console.log(scope);
+  
+  if(scope.length == 1){
+    return scope[0];
+  }
+
+  
+  // all variables to types recursivly
   for(i = 0; i < scope.length; i++){ 
-    if(isArray(cs[i])){
-      cs[i] = scope_check_syntax(cs[i], operators);
-      console.log("array found!");
-    } else if (isVariable(cs[i])){
-      cs[i] = cs[i].type;
-      console.log(cs);
+    
+    if(isArray(scope[i])){
+      // TODO: try catch
+      scope[i] = scope_check_syntax(scope[i], operators, n+1);
+       
+    } else if (isVariable(scope[i])){
+      scope[i] = scope[i].type;
+      console.log(scope);
     }
   }
   
-  console.log("has_scope()");
+  //console.log("has_scope()");
   
   var has_operator = true;
   var priority = 0;
+
   
   while(has_operator){
     has_operator = false;
     
     // Find the operator in the scope
-    for(i = 0; i < cs.length; i++){
+    for(i = 0; i < scope.length; i++){
       
-      if(isOperator(cs[i])){
+      if(isOperator(scope[i])){
         has_operator = true;
       }
       
       
-      if(isOperator(cs[i]) && hasPriority(cs[i], priority)){
+      if(isOperator(scope[i]) && hasPriority(scope[i], priority)){
+        
+        //console.log("found operator");
+        
         // (i) is the operators positon in the scope
         // (operator_position) is the positon in the operators syntax
         var operator_position; 
-        var operator_length = cs[i].input.length; 
+        var operator_length = scope[i].input.length; 
         
         // we need the syntax for the opeator
         // e.g. "True   ==   Bool"
@@ -217,23 +233,25 @@ function scope_check_syntax(scope, operators){
         //        0     1     2
         //      operator_length    :3
         //      operator_position  :1
-        
         for(j = 0; j < operator_length; j++){
-          if(cs[i].input[j] == null){
+          if(scope[i].input[j] == null){
             operator_position = j;
             break;
           } 
         } 
+        //console.log("operator_length:" + operator_length);
+        //console.log("operator_position:" + operator_position);
         
         // we check that we have enough arguments for the opeator
         // Expected: [Bool][Null][Bool]
         // Actual:   [Bool][Null]
-        var scope_length = cs[i].length;
+        var scope_length = scope.length;
         if(scope_length < operator_length){
           throw syntaxException("too few arguments for " + cs[i].syntax, 
                                 "requires "              + cs[i].operator_length,
                                 "has "                   + scope_length);
         }
+        //console.log("scope_length:" + scope_length);
         
         // we check that the operators have order of the syntax is good
         // Expected: [Bool][Null][Bool] -> i - operator_position = 1 - 1 =  0
@@ -242,21 +260,44 @@ function scope_check_syntax(scope, operators){
         if(start_position < 0){
           throw syntaxException("incorrect syntax for the operator", "", "");
         }
+        //console.log("start_position:" + start_position);
         
         // we check that the operators syntax matches the expression
         // Expected: [Bool][Null][Bool]
         // Actual:   [Int][Bool][Null]
         // cs[i] is the operator that we're working on
         for(j = 0; j < operator_length; j++){
-          if(cs[i].input[j] == null){
-            cs[j+start_position] == cs[i];
+          //console.log(j + " (start)");
+          
+          if(scope[i].input[j] == null){
+            // Expect: [==]
+            if(!scope[i] === scope[j+start_position]){
+              // Actual: [Bool]
+              throw compilerException(
+                "scope_check_syntax()",
+                "never will be executed",
+                "was executed");
+            }
+          
           }else{
             
+            // Expect: [Bool]
+            if(!scope[j+start_position] === scope[i].input[j]){
+              //Actual: ![Bool]
+              console.log("incorrect argument");
+              throw syntaxException(
+                "incorrect argument", scope[i].input[j], typeof scope[j+start_position]);
+            }else{
+              // Actual: [Bool]
+            }
           } 
-          cs[j+start_position] == cs[j].input.
-          if(operator)
+          
         }
         
+        //replace the input(s) with the output
+        var output = scope[i].output;
+        var spliced = scope.splice(start_position, scope_length, output);
+      
       }
       
       
@@ -265,6 +306,9 @@ function scope_check_syntax(scope, operators){
     priority++;
   }
   
+  console.log(scope);
+      
+  return scope;
     
 }
 
@@ -328,12 +372,12 @@ function truth_table_make_variables(variable_names){
   return variables;
 }
 
-function truth_table_next_row(variables){
-  
-}
-
 function truth_table_get_variables(expression){
   return expression.match(/[A-Za-z]+/g);
+}
+
+function execute_expression(expression, variables, values){
+  
 }
 
 function truth_table(expression){
@@ -350,7 +394,17 @@ function truth_table(expression){
 		var scope = expression_evaluate(expression, variables, operators, 0);
     
     console.log("\n---Checking Syntax---");
-    scope_check_syntax(scope);
+    
+    try{
+      var final = scope_check_syntax(scope, operators);
+    }catch(error){
+      
+    }
+    
+    if(final === Boolean){
+      
+    }
+    
     
 }
 
