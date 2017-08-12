@@ -139,36 +139,57 @@ function variable_resolve(variable_name, variables){
 }
 
 function isVariable(element){
-  return element.constructor == Variable;
+  return element instanceof Variable;
 }
 
 function isArray(element){
-  return element.constructor == Array;
+  return element instanceof Array;
 }
 
 function isOperator(element){
-  return element.constructor == Operator;
+  return element instanceof Operator;
 }
 
-function hasPriority(element, cur){
-  return element.priority == cur;
+
+function compilerException(location, expected){
+  this.name = "compilerException";
+  this.location = location;
+  this.expected = expected;
 }
 
+function hasPriority(element, i){
+  if(isOperator(element)){  
+    return element.priority == i;
+  }else{
+    throw compilerException("hasPriority()", 
+                            "element is an operator");
+  }
+}
+
+function syntaxException(message, actual, expected){
+  this.name = "Syntax Exception";
+  this.message = message;
+  this.expected = expected;
+  this.actual = actual;
+}
 
 function scope_check_syntax(scope, operators){
  
   var cs = scope;
+  console.log("scope_check_syntax()");
   
   // resolve all variables in the array
   for(i = 0; i < scope.length; i++){ 
     if(isArray(cs[i])){
       cs[i] = scope_check_syntax(cs[i], operators);
       console.log("array found!");
-    } else if (isVariable(check_scope[i])){
+    } else if (isVariable(cs[i])){
       cs[i] = cs[i].type;
       console.log(cs);
     }
   }
+  
+  console.log("has_scope()");
   
   var has_operator = true;
   var priority = 0;
@@ -176,27 +197,64 @@ function scope_check_syntax(scope, operators){
   while(has_operator){
     has_operator = false;
     
+    // Find the operator in the scope
     for(i = 0; i < cs.length; i++){
+      
+      if(isOperator(cs[i])){
+        has_operator = true;
+      }
+      
+      
       if(isOperator(cs[i]) && hasPriority(cs[i], priority)){
-        var op_pos;
-        for(j = 0; j < cs[i].input.length; j++){
+        // (i) is the operators positon in the scope
+        // (operator_position) is the positon in the operators syntax
+        var operator_position; 
+        var operator_length = cs[i].input.length; 
+        
+        // we need the syntax for the opeator
+        // e.g. "True   ==   Bool"
+        // or   [Bool][Null][Bool]
+        //        0     1     2
+        //      operator_length    :3
+        //      operator_position  :1
+        
+        for(j = 0; j < operator_length; j++){
           if(cs[i].input[j] == null){
-            op_pos = j;
+            operator_position = j;
+            break;
           } 
         } 
         
-        if(cs[i].length < cs[i].input.length){
-          console.log("error: input too shot, expected ("   + 
-          cs[i].input.length                                + 
-          ")"                                               + 
-          ", recieved ("                                    + 
-          cs[i].length                                      + 
-          ")");
+        // we check that we have enough arguments for the opeator
+        // Expected: [Bool][Null][Bool]
+        // Actual:   [Bool][Null]
+        var scope_length = cs[i].length;
+        if(scope_length < operator_length){
+          throw syntaxException("too few arguments for " + cs[i].syntax, 
+                                "requires "              + cs[i].operator_length,
+                                "has "                   + scope_length);
         }
         
-        for(j = 0; j < cs[i].input.length; j++){
-          console.log(cs[j] + " with " + cs[i].input[j]);
-          
+        // we check that the operators have order of the syntax is good
+        // Expected: [Bool][Null][Bool] -> i - operator_position = 1 - 1 =  0
+        // Actual:   [Null][Bool][Bool] -> i - operator_position = 0 - 1 = -1
+        var start_position = i - operator_position;
+        if(start_position < 0){
+          throw syntaxException("incorrect syntax for the operator", "", "");
+        }
+        
+        // we check that the operators syntax matches the expression
+        // Expected: [Bool][Null][Bool]
+        // Actual:   [Int][Bool][Null]
+        // cs[i] is the operator that we're working on
+        for(j = 0; j < operator_length; j++){
+          if(cs[i].input[j] == null){
+            cs[j+start_position] == cs[i];
+          }else{
+            
+          } 
+          cs[j+start_position] == cs[j].input.
+          if(operator)
         }
         
       }
