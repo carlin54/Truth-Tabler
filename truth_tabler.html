@@ -362,11 +362,37 @@ function execute_expression(expression, variables, values){
   
 }
 
+function sum(array){
+  var sum = 0;
+  for(i = 0; i < array.length; i++){
+    sum = sum + array[i];
+  }
+  return sum;
+}
+function generate_powers(b, n){
+  var column_vector = [];
+  for(i = 0; i < n; i++){
+    column_vector.push(b^i);
+  }
+  return column_vector;
+}
+function possible_combinations(s, n){
+  return Math.pow(s, n);
+}
+
+function floor(x){
+  return x - (x % 1);
+}
+
 function truth_table(expression){
     
     console.log("\n---Fetching Variable Names---");
+    var variable_names;
+    var variables;
+    var scope;
+    
     try{
-      var variable_names = truth_table_get_variables(expression);
+      variable_names = truth_table_get_variables(expression);
     }catch(error){
       
     }
@@ -375,36 +401,37 @@ function truth_table(expression){
     
     console.log("\n---Creating Variables---");
     try{
-      var variables = truth_table_make_variables(variable_names);
+      variables = truth_table_make_variables(variable_names);
     }catch(error){
       
     }
 		console.log("\n---Rendering Expression---");
 		try{
-		  var scope = expression_evaluate(expression, variables, operators, 0);
+		  scope = expression_evaluate(expression, variables, operators, 0);
 		}catch(error){
 		  
 		}
     
     console.log("\n---Checking Syntax---");
-    
     try{
       var final = scope_check_syntax(scope, operators);
     }catch(error){
       
     }
     
-    var counters;
-    for(i = 0; i < variables.length; i++){
-      counters.push(0);
-    }
-    
-    if(final === Boolean){
-      for(i = 0; i < 2^variables.length; i++){
-        for(j = 0; j < variables.length; j++){
-          counters[j]++;  
-        }
+    var s = [0, 1];
+    var b = s.length;                     // base
+    var l = variables.length;             //
+    var n = possible_combinations(b, l);
+
+    for(i = 0; i < n; i++){
+      var row = [];
+      for(j = 0; j < l; j++){
+        var index = floor((i/Math.pow(b,j)) % b);
+        variables[j].value = s[index];
       }
+      execute_expression(expression, variables);
+      console.log(row);
     }
     
     
