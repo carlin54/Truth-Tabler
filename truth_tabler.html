@@ -9,15 +9,16 @@ class Operator {
 		
 	}
 	
-	function position(){
+	position(){
 	  for(i = 0; i < input.length; i++){
 	    if(input[i] === null){
 	      return i;
 	    }
 	  }
 	}
-
 }
+
+
 
 function nand (input){return !(input[0] & input[1]);                            }
 function and  (input){return input[0] && input[1];                              }
@@ -175,7 +176,7 @@ function isVariableSameAsType(variable, type){
     return variable instanceof type;
 }
 
-function scope_check_syntax(scope, operators, n=1){
+function type_reduction(scope, operators, n=1){
  
   if(scope.length == 1){
     return scope[0];
@@ -293,7 +294,7 @@ function scope_check_syntax(scope, operators, n=1){
     
 }
 
-function evaluate_expression(expression, variables, operators, start){
+function make_parsable_expression(expression, variables, operators, start=0){
   var length = expression_get_length(expression, start);
   var i = start;
   var clipped_expression = expression.substring(start, start+length);
@@ -314,10 +315,13 @@ function evaluate_expression(expression, variables, operators, start){
       scope.push(operator);
       i += operator.syntax.length;
     }else if(expression_is_variable(expression, i)){
+      
       var variable_name = expression_get_variable(expression, i);
       var variable = variable_resolve(variable_name, variables);
       scope.push(variable);
+      console.log(variable);
       i += variable_name.length;
+      
     }else if(expression_is_space(expression, i)){
       continue;
     }else{
@@ -365,14 +369,18 @@ function execute_expression(expression, variables, n=0){
       if(isOperator(expression[i])){
         if(expression[i].priority == p){
           var l = expression[i].input.length;
-          var p = expression[i].position(); //operator position (relativly)
-          var s = i - p;                    //start
+          var p = expression[i].position();   //operator position (relativly)
+          var s = i - p;                      //start index
           var inputs = [];
           for(j = s; j < s+l; j++){
-            input.push(expression[j].)
+            console.log(j);
+            if(j != p){
+              input.push(expression[j].value);
+            }
+            
           }
-        }
-      } 
+        } 
+      }
     }
   }
   
@@ -394,27 +402,43 @@ function floor(x){
   return x - (x % 1);
 }
 
+function assert(condition, message) {
+    if (!condition) {
+        throw message || "Assertion failed";
+    }
+}
+
 function truth_table(expression){
     
     var variable_names = fetch_variables(expression);
     var variables = make_variables(variable_names);
     
-		var parsable_expression = evaluate_expression(expression, variables, operators);
+		var parsable_expression = make_parsable_expression(expression, variables, operators);
     
-    var executable_expression = scope_check_syntax(parsable_expression, operators);
+    var final_type = type_reduction(parsable_expression, operators);
+    
+    assert(final_type == [Boolean]);
+    
+    console.log(parsable_expression);
     
     var s = [false, true];                // possible inputs
     var b = s.length;                     // base
     var l = variables.length;             // total values
     var n = possible_combinations(b, l);  
     
+    console.log("s:" + s);
+    console.log("b:" + b);
+    console.log("l:" + l);
+    console.log("n:" + n);
     for(i = 0; i < n; i++){
+      console.log(i);
       for(j = 0; j < l; j++){
+        //console.log("j:" + j);
         var index = floor((i/Math.pow(b,j)) % b);
         variables[j].value = s[index];
       }
       
-      console.log(execute_expression(executable_expression, variables));
+      execute_expression(executable_expression, variables);
     }
     
     
@@ -425,4 +449,4 @@ function unit_test(){
 }
 
 unit_test();
-truth_table("(!(A && B) || (D | (A || B))) & (A !& C)");
+truth_table("A || B");
