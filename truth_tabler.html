@@ -1,3 +1,5 @@
+<script type="text/javascript">
+
 class Operator {
 
 	constructor(priority, syntax, func, input, output){
@@ -10,8 +12,8 @@ class Operator {
 	}
 	
 	position(){
-	  for(i = 0; i < input.length; i++){
-	    if(input[i] === null){
+	  for(i = 0; i < this.input.length; i++){
+	    if(this.input[i] === null){
 	      return i;
 	    }
 	  }
@@ -28,7 +30,7 @@ function not  (input){return !input[0];                                         
 
 var operator_nand = new Operator(2, "!&", nand, [Boolean, null, Boolean], Boolean);
 var operator_and =  new Operator(2, "&&", and, [Boolean, null, Boolean],  Boolean);
-var operator_xor =  new Operator(2, "||", xor, [Boolean, null, Boolean],  Boolean);
+var operator_xor =  new Operator(2, "^", xor, [Boolean, null, Boolean],  Boolean);
 var operator_or =   new Operator(2, "|", or, [Boolean, null, Boolean],    Boolean);
 var operator_not =  new Operator(1, "!", not, [null, Boolean],            Boolean);
 
@@ -56,14 +58,13 @@ var uniqueArray = function(arrArg) {
 };
 
 
-function expression_get_length(expression, start){
+function get_expression_length(expression, start){
   if(expression[start] == '('){
     
     var counter = 0;
     var i = start;
     
     do{
-      
       if(expression[i] == '('){
         counter++;
       }else if(expression[i] == ')'){
@@ -75,7 +76,7 @@ function expression_get_length(expression, start){
     if(counter === 0){
       return i-start;
     }else{
-      console.log("error: no closing parenthesis at " + start);  
+      assert(false, "error: no colosing parenthesis at " + start);
     }
     
   }else{
@@ -83,7 +84,7 @@ function expression_get_length(expression, start){
   }
 }
 
-function expression_is_operator(expression, i){
+function is_operator(expression, i){
   for(j = 0; j < operators.length; j++){
     for(k = 0; k < operators[j].syntax.length; k++){
       var sbstr = expression.substring(i, i+operators[j].syntax.length);
@@ -96,16 +97,16 @@ function expression_is_operator(expression, i){
   }
   return false;
 }
-function expression_is_space(expression, i){
+function is_space(expression, i){
   return expression[i] == ' ';
 }
-function expression_is_variable(expression, i){
+function is_variable(expression, i){
   return expression[i].match(/[A-Za-z]/g);
 }
-function expression_is_nested_expression(expression, i){
+function is_nested_expression(expression, i){
   return expression[i] == '(';
 }
-function expression_get_operator(expression, i){
+function get_operator(expression, i){
   for(j = 0; j < operators.length; j++){
     for(k = 0; k < operators[j].syntax.length; k++){
       var sbstr = expression.substring(i, i+operators[j].syntax.length);
@@ -116,7 +117,7 @@ function expression_get_operator(expression, i){
     }  
   }  
 }
-function expression_get_variable(expression, i){
+function get_variable(expression, i){
   var variable_name = new String('');
   for(j = i; j < expression.length; j++){
     if(expression[j].match(/[A-Za-z]/g)){
@@ -289,48 +290,91 @@ function type_reduction(scope, operators, n=1){
     
     priority++;
   }
+  if(scope.length == 1){
+    return scope[0];
+  }
 
   return scope;
+  
     
 }
 
-function make_parsable_expression(expression, variables, operators, start=0){
-  var length = expression_get_length(expression, start);
-  var i = start;
-  var clipped_expression = expression.substring(start, start+length);
-  var expect_parenthesis = false;
+function make_parsable_expression(expression, variables, operators){
   
+  var scope = [];
+  for(i = 0; i < expression.length; ){
+    console.log(expression[i]);
+    if(is_nested_expression(expression, i)){
+      var length = get_expression_length(expression, i);
+      var nested_expression = expression.substring(i+1, i+length-1);
+      console.log("nested_expression found: " + nested_expression);
+      scope.push(make_parsable_expression(nested_expression, variables, operators));
+      i+=nested_expression.length;
+      continue;
+    }else if(is_operator(expression, i)){
+      var operator = get_operator(expression, i);
+      console.log("operator found: " + operator.syntax);
+      scope.push(operator);
+      i += operator.syntax.length;
+      continue;
+    }else if(is_variable(expression, i)){
+      console.log("found variable: ")
+    }else if(is_space(expression, i)){
+      console.log("found space");
+      i++;
+      continue;
+    }else{
+      assert(false, "error: unknown at " + i + "\"" + expression[i] + "\"");
+      i++;
+      continue;
+    }
+
+  }
+  return scope;
+  /*
+  var length = get_expression_length(expression, start);
+  var i = start;
+  var expect_parenthesis = false;
+  var clipped_expression = expression.substring(start, start+length);
+  console.log("clipped_expression:" + clipped_expression);
+  console.log("expression length:" + length);
+  console.log("start:" + i);
+
   if(expression[start] == '('){
-    expect_parenthesis = true;
     i++;
   }
   
   var scope = [];
   for(; i < start+length; i++){
-    if(expression_is_nested_expression(expression, i)){
-      scope.push(expression_evaluate(expression, variables, operators, i)); //scope.push();
-      i += expression_get_length(expression, i);
-    }else if(expression_is_operator(expression, i)){
-      var operator = expression_get_operator(expression, i);
+    console.log(expression[i]);
+    if(is_nested_expression(expression, i)){
+      console.log("found nested expression");
+      scope.push(make_parsable_expression(clipped_expression, variables, operators, 0)); //scope.push();
+      i += clipped_expression.length;
+    
+    }else if(is_operator(expression, i)){
+      console.log("found operator");
+      var operator = get_operator(expression, i);
       scope.push(operator);
       i += operator.syntax.length;
-    }else if(expression_is_variable(expression, i)){
-      
-      var variable_name = expression_get_variable(expression, i);
+    
+    }else if(is_variable(expression, i)){  
+      console.log("found variable");
+      var variable_name = get_variable(expression, i);
       var variable = variable_resolve(variable_name, variables);
       scope.push(variable);
       console.log(variable);
       i += variable_name.length;
       
-    }else if(expression_is_space(expression, i)){
+    }else if(is_space(expression, i)){
       continue;
+
     }else{
-      console.log("no fucking clue what " + expression[i] + " is.");
+      assert(false, "error: unknown at " + i + "\"" + expression[i] + "\"");
     }
   }
   
-  
-  return scope;
+  */
 }
 
 
@@ -348,42 +392,73 @@ function fetch_variables(expression){
   return variables;
 }
 
-function execute_expression(expression, variables, n=0){
-  
+function execute_expression(expression, n=0){
+  console.log("execute_expression");
+  console.log(expression);
+  // Solve the most nested expressions first
   for(i = 0; i < expression.length; i++){
     if(isArray(expression[i])){
       expression[i] = execute_expression(expression[i], variables, n+1);
     }
   }
   
+  // Reduce all the variables to the values
   for(i = 0; i < expression.length; i++){
     if(isVariable(expression[i])){
       expression[i] = expression[i].value;
     }
   }
   
+  var a = 0;
+
+  // Solve the expression
   var foundOperator = true;
-  for(p = 0; foundOperator; p++){
+  for(priority = 0; foundOperator; priority++){
     foundOperator = false;
     for(i = 0; i < expression.length; i++){
+      console.log("i -> " + i);
+      a++;
+      if(a > 50){
+        break;
+      }
       if(isOperator(expression[i])){
-        if(expression[i].priority == p){
+        foundOperator = true;
+        if(expression[i].priority == priority){
+          console.log(expression[i].input);
           var l = expression[i].input.length;
           var p = expression[i].position();   //operator position (relativly)
           var s = i - p;                      //start index
+          var e = s + l - 1;                  //end index
           var inputs = [];
           for(j = s; j < s+l; j++){
             console.log(j);
             if(j != p){
-              input.push(expression[j].value);
+              inputs.push(expression[j]);
             }
-            
           }
+          out = expression[i].func(inputs);
+          // console.log("before slice");
+          // console.log(expression);
+          expression.splice(s,l,out);
+          // console.log("after slice");
+          // console.log(expression);
+          // console.log("inputs");
+          // console.log(inputs); 
+          // console.log("out");
+          // console.log(out);    
+          // console.log("s:" + s);    
+          // console.log("e:" + e);
         } 
       }
     }
+    if(a > 50){
+      break;
+    }
   }
-  
+  if (expression.length == 1){
+    return expression[0];
+  }
+  return expression;
 }
 
 function generate_powers(b, n){
@@ -402,6 +477,10 @@ function floor(x){
   return x - (x % 1);
 }
 
+function wait(ms, message){
+      setTimeout(function(){console.log(message)},ms);
+}
+
 function assert(condition, message) {
     if (!condition) {
         throw message || "Assertion failed";
@@ -409,38 +488,56 @@ function assert(condition, message) {
 }
 
 function truth_table(expression){
-    
-    var variable_names = fetch_variables(expression);
-    var variables = make_variables(variable_names);
-    
-		var parsable_expression = make_parsable_expression(expression, variables, operators);
-    
-    var final_type = type_reduction(parsable_expression, operators);
-    
-    assert(final_type == [Boolean]);
-    
-    console.log(parsable_expression);
-    
-    var s = [false, true];                // possible inputs
-    var b = s.length;                     // base
-    var l = variables.length;             // total values
-    var n = possible_combinations(b, l);  
-    
-    console.log("s:" + s);
-    console.log("b:" + b);
-    console.log("l:" + l);
-    console.log("n:" + n);
-    for(i = 0; i < n; i++){
-      console.log(i);
-      for(j = 0; j < l; j++){
-        //console.log("j:" + j);
-        var index = floor((i/Math.pow(b,j)) % b);
-        variables[j].value = s[index];
+  
+  var variable_names = fetch_variables(expression);
+  
+  console.log(variable_names);
+
+  var variables = make_variables(variable_names.concat());
+  
+	var parsable_expression = make_parsable_expression(
+                              expression.concat(), 
+                              variables.concat(), operators.concat());
+  console.log("parsable_expression");
+  console.log(parsable_expression);
+  console.log(parsable_expression.length);
+
+  var final_type = type_reduction(
+                      parsable_expression.concat(), 
+                      operators.concat());
+  
+  assert(final_type == Boolean);
+  
+
+  var s = [false, true];                // possible inputs
+  var b = s.length;                     // base
+  var l = variables.length;             // total values
+  var n = possible_combinations(b, l);  
+  var c = 0;
+  //console.log("s:" + s);
+  //console.log("b:" + b);
+  //console.log("l:" + l);
+  //console.log("n:" + n);
+  for(z = 0; z < n; z++){
+    //console.log(">z:" + z);
+    for(j = 0; j < l; j++){
+      c++;
+      if(c > 100){
+        break;
       }
-      
-      execute_expression(executable_expression, variables);
+      //console.log("j:" + j);
+      var index = floor((z/Math.pow(b,j)) % b);
+      //console.log("index:" + index);
+      //console.log("z:" + z);
+      variables[j].value = s[index];
     }
-    
+    if(c > 100){
+        break;
+    }
+    result = execute_expression(parsable_expression.concat(), variables.concat());
+    console.log("expression_executed -> " + result);
+  }
+  
     
 }
 
@@ -449,4 +546,5 @@ function unit_test(){
 }
 
 unit_test();
-truth_table("A || B");
+truth_table("(A ^ B) && !(C ^ D)")
+</script>
